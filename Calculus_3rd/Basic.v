@@ -77,3 +77,18 @@ Definition Com_F_c (f:R->R) c x := f (c * x).
 
 (* 设有函数f(x)，实数c、d，下面给出函数f(cx+d)的形式化描述 *)
 Definition Com_F (f:R->R) (c d x:R) := f (c*x+d).
+
+
+(* 排中律 *)
+Axiom classic : forall P : Prop, P \/ ~P.
+
+Theorem not_and_or : forall P Q : Prop, ~ (P /\ Q) -> ~ P \/ ~ Q.
+Proof.
+  intros.
+  generalize(classic P); intro.
+  generalize(classic Q); intro.
+  destruct H0. destruct H1.
+  assert(P/\Q). { split; auto. }
+  contradiction.
+  right; auto. left; auto.
+Qed.
