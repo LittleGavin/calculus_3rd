@@ -1,15 +1,13 @@
 Require Import Reals.
 Open Scope R_scope.
 
-(** 加入前提的*)
-
-Lemma  not_exist : forall (p1 p2:R->Prop), (~ exists x, p1 x /\ p2 x) -> (forall x, p1 x -> ~ p2 x).
+Lemma  not_exist : forall (p1 p2:R->Prop),
+  (~ exists x, p1 x /\ p2 x) -> (forall x, p1 x -> ~ p2 x).
 Proof.
   intros.
   unfold not; intro.
   destruct H; exists x; auto.
 Qed.
-
 
 Lemma total_eq_or_neq : forall r1 r2:R, r1=r2 \/ r1<>r2.
 Proof.
@@ -20,16 +18,13 @@ Proof.
   apply Rgt_not_eq in r; auto.
 Qed.
 
-Lemma Rmult_par_inv_eq :
-  forall r r1:R, r<>0 -> r * (r1 /r) = r*r1/r.
+Lemma Rmult_par_inv_eq : forall r r1:R, r<>0 -> r * (r1 /r) = r*r1/r.
 Proof.
   intros; unfold Rdiv.
   rewrite Rmult_assoc; auto.
 Qed.
 
- 
-Lemma Rmult_eq_r :
-  forall r r1:R, r<>0 -> r * r1 /r = r1.
+Lemma Rmult_eq_r : forall r r1:R, r<>0 -> r * r1 /r = r1.
 Proof.
   intros.
   unfold Rdiv.
@@ -41,7 +36,6 @@ Proof.
   intros.
   apply Rmult_lt_reg_r with (r:=r2); auto; rewrite Rmult_0_l; auto.
 Qed.
-
 
 Lemma Rmult_le_r :
   forall r r1 r2 r3:R, 0 < r -> r1 * r <= r2 * r <= r3 * r -> r1 <= r2 <= r3.
@@ -158,7 +152,6 @@ Proof.
   apply Rinv_0_lt_compat; auto.
 Qed.
 
-
 Lemma Rlt_mult : forall r r1 r2, r>0 -> r1*r<r2->r1<r2/r.
 Proof.
   intros.
@@ -229,4 +222,14 @@ Proof.
     apply Rgt_ge; auto.
     apply Rgt_ge; auto.
     apply Rle_ge; auto.
+Qed.
+
+Lemma Real_Order : forall r r1:R, r=r1\/r<>r1.
+Proof.
+  intros.
+  generalize(total_order_T r r1); intro.
+  destruct H. destruct s.
+  right; apply Rlt_not_eq; auto.
+  left; auto.
+  right; apply Rgt_not_eq; auto.
 Qed.
