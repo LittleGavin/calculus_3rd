@@ -6,7 +6,7 @@ Definition diff_quo_median F f a b :=
   forall u v, u ∈ [a,b] /\ v ∈ [a,b] /\ v-u>0 ->
   exists (p q:R), p ∈ [u,v] /\ q ∈ [u,v] /\ f p <= (F v - F u)/(v - u) <= f q.
 
-Theorem th4_1_1 : forall (S: R->R->R) (f F:R->R) (a b:R),
+Theorem Theorem4_1_1 : forall (S: R->R->R) (f F:R->R) (a b:R),
   integ_sys S f a b ->
   strict_unequal S f a b ->
   forall y, y ∈ [a,b] ->(forall x, x ∈ [a,b] -> F x = S y x) ->
@@ -15,7 +15,7 @@ Proof.
   intros.
   unfold diff_quo_median; intros.
   destruct H0 with (w1:=u)(w2:=v); auto.
-  generalize (valuation_th S f F a b ); intros.
+  generalize (Valuation_Theorem S f F a b ); intros.
   apply H6 with (y:=y)(u:=u)(v:=v)in H; auto; clear H6.
   destruct H, H, H, H6.
   exists x, x0.
@@ -27,7 +27,7 @@ Proof.
 Qed.
 
 
-Theorem th4_1_2 : forall (S: R->R->R) (f F:R->R) (a b:R),
+Theorem Theorem4_1_2 : forall (S: R->R->R) (f F:R->R) (a b:R),
   (forall u v, u ∈ [a,b] /\ v ∈ [a,b] -> S u v = F v - F u) ->
   diff_quo_median F f a b ->
   integ_sys S f a b /\ strict_unequal S f a b.
@@ -77,58 +77,32 @@ Proof.
     + tauto.
 Qed.
 
-(*定义3.2*)
+(*定义4.2*)
 
 (*可加性*)
-Definition additivity' (s:R->R->R)(a b:R):=
+Definition additivity' (S:R->R->R)(a b:R):=
   forall(u v w:R), u ∈ [a,b] /\ v ∈ [a,b] /\w ∈ [a,b] ->
-  s u v + s v w = s u w. 
+  S u v + S v w = S u w. 
 
 (*中值性*)
-Definition median (s:R->R->R)(f:R->R)(a b:R):=
+Definition median (S:R->R->R)(f:R->R)(a b:R):=
   forall(u v:R), u ∈ [a,b] /\ v ∈ [a,b] /\ v - u > 0 ->
   exists p q:R, p ∈ [u,v] /\ q ∈ [u,v] /\
-  f p *(v - u)<=s u v<=f q *(v - u).
+  f p *(v - u)<=S u v<=f q *(v - u).
 
 (*积分系统*)
-Definition integ_sys' (s:R->R->R)(f:R->R)(a b:R) :=
-  additivity' s a b /\ median s f a b.
+Definition integ_sys' (S:R->R->R)(f:R->R)(a b:R) :=
+  additivity' S a b /\ median S f a b.
 
-(*唯一性*)
-Definition integrable' (f:R->R)(a b:R) :=
-  forall s1 s2:R->R->R, integ_sys s1 f a b /\ integ_sys s2 f a b -> s1 = s2.
+Notation " S ∫ f '(x)dx' " := (integ_sys' S f)(at level 10).
 
-(*定理3.2*)
-
-Lemma lemma4_2 : forall F f a b,
-  diff_quo_median F f a b -> uniform_continuous f a b ->
-  forall s:R->R->R, (forall x y, s x y = F y - F x) ->
-  integ_sys' s f a b.
-Proof.
-  intros.
-  unfold diff_quo_median in H.
-  unfold integ_sys'.
-  split.
-  - unfold additivity'; intros.
-    repeat rewrite H1. ring.
-  - unfold median; intros.
-    generalize H2; intro.
-    apply H in H2; clear H.
-    destruct H2, H.
-    exists x, x0.
-    rewrite H1.
-    split. tauto. split. tauto.
-    eapply Rinv_le_r with (r:=v-u). tauto.
-    unfold Rdiv; repeat rewrite Rinv_r_simpl_l.
-    unfold Rdiv in H. tauto.
-    apply Rgt_not_eq; tauto.
-    apply Rgt_not_eq; tauto.
-Qed.
-
-(*定理3_2*)
+(*可积*)
+Definition integrable' f a b :=
+  exists S, integ_sys' S f a b /\
+  (forall S':R->R->R, integ_sys' S' f a b -> S' = S).
 
 Definition F_f_i (f:R->R)(i n:nat)(x1 x2:R): R :=
-  f(x1+(x2-x1)* INR(i+1) / INR(n+1)) - f(x1+(x2-x1)* INR i / INR(n+1)). 
+  f(x1+(x2-x1)* INR(i+1) / INR(n+1)) - f(x1+(x2-x1)* INR i / INR(n+1)).
 
 Open Scope nat_scope.
 Fixpoint sum_f_N (f:R->R)(i n:nat) F (x1 x2:R) : R :=
@@ -313,8 +287,32 @@ Fixpoint sum_f_x_i (f:R->R)(n:nat) x : R :=
   | S p => sum_f_x_i f p x + f_x_i f x n
   end.
 
+Lemma th4_2_1 : forall F f a b,
+  diff_quo_median F f a b -> uniform_continuous f a b ->
+  forall s:R->R->R, (forall x y, s x y = F y - F x) ->
+  integ_sys' s f a b.
+Proof.
+  intros.
+  unfold diff_quo_median in H.
+  unfold integ_sys'.
+  split.
+  - unfold additivity'; intros.
+    repeat rewrite H1. ring.
+  - unfold median; intros.
+    generalize H2; intro.
+    apply H in H2; clear H.
+    destruct H2, H.
+    exists x, x0.
+    rewrite H1.
+    split. tauto. split. tauto.
+    eapply Rinv_le_r with (r:=v-u). tauto.
+    unfold Rdiv; repeat rewrite Rinv_r_simpl_l.
+    unfold Rdiv in H. tauto.
+    apply Rgt_not_eq; tauto.
+    apply Rgt_not_eq; tauto.
+Qed.
 
-Theorem th4_2 : forall F G f a b, diff_quo_median F f a b ->
+Lemma th4_2_2 : forall F G f a b, diff_quo_median F f a b ->
   diff_quo_median G f a b -> uniform_continuous f a b ->
   forall u v, u ∈ [a,b] /\ v ∈ [a,b] /\ v-u>0 ->
   G v - G u = F v - F u.
@@ -819,6 +817,20 @@ Proof.
   apply Rlt_le; tauto.
 Qed.
 
+Theorem Theorem4_2 : forall F f a b,
+  diff_quo_median F f a b -> uniform_continuous f a b ->
+  integ_sys' (fun u v => F v-F u) f a b /\
+  (forall G, diff_quo_median G f a b ->
+  forall u v, u ∈ [a,b] /\ v ∈ [a,b] /\ v-u>0 ->
+  G v - G u = F v - F u).
+Proof.
+  intros.
+  split.
+  - apply th4_2_1 with (F:=F); auto.
+  - intros.
+    apply th4_2_2 with (f:=f)(a:=a)(b:=b); auto.
+Qed.
+
 Lemma lemma4_3_1 : forall  r r1 r2, r<=r1 -> r1<=r2 ->
   Rabs r1 <= Rabs r \/ Rabs r1 <= Rabs r2.
 Proof.
@@ -841,6 +853,7 @@ Proof.
     apply Rlt_le; auto.
 Qed.
 
+
 (* 若F在[a,b]上强可导，f(x)是F(x)的导数，则在[a,b]上有两点u、v，使得
   f(u)(b-a)>=F(b)-F(a)>=f(v)(b-a) *)
 
@@ -850,7 +863,7 @@ Lemma lemma4_3_2 : forall F f a b, a<b -> str_derivative F f a b ->
 Proof.
 Admitted.
 
-Theorem th4_3 : forall F f a b,
+Theorem Theorem4_3 : forall F f a b,
   diff_quo_median F f a b /\
   (exists M, M>0 /\ forall x h, x ∈ [a,b] /\ (x+h) ∈ [a,b] ->
   Rabs(f(x+h) - f(x)) <= M*(Rabs h))
@@ -1103,6 +1116,13 @@ Proof.
         rewrite Rminus_diag_eq; auto. rewrite Rabs_R0. apply Req_le_sym; auto.
 Qed.
 
+
+Lemma lemma4_4_2 : forall F f a b, derivative F f a b ->
+  exists u v, u ∈ [a,b] /\ v ∈ [a,b] /\ f u*(b-a)<=F b-F a <=f v *(b-a).
+Proof.
+Admitted.
+
+
 (* 若 F 在[a , b] 上一致可导, f(x)是 F(x)的导数,则在[ a , b] 上有两点 u、v ,使得
      f(u)*(b-a)<=F(b)-F(a)<=f(v)*(b-a) *)
 
@@ -1186,12 +1206,7 @@ Proof.
 Qed.
 
 
-Lemma lemma4_4_2 : forall F f a b, derivative F f a b ->
-  exists u v, u ∈ [a,b] /\ v ∈ [a,b] /\ f u*(b-a)<=F b-F a <=f v *(b-a).
-Proof.
-Admitted.
-
-Theorem th4_4 : forall F f a b, derivative F f a b <->
+Theorem Theorem4_4 : forall F f a b, derivative F f a b <->
   diff_quo_median F f a b /\ uniform_continuous f a b.
 Proof.
   intros.
