@@ -88,118 +88,95 @@ Proof.
     apply Rabs_pos.
 Qed.
 
-(* 定义一个选择器，其性质为：
-      比较任意两个实数a，b的大小，如果a>b, if_a_gt_b a b 值为true
-      如果a<=b, if_a_gt_b a b值为false；且反向推也成立。该性质由公理comp_a_b_Pro定义 *)
 
-Parameter if_a_gt_b : R -> R -> bool.
+Lemma total_le_gt : forall r1 r2, {r1 <= r2} + {r1 > r2}.
+Proof.
+  intros. generalize(total_order_T r1 r2); intro.
+  destruct H. left. destruct s. left; auto. right; auto.
+  right; auto.
+Qed.
 
-Axiom comp_a_b_Pro : forall a b, (if_a_gt_b a b = true <-> a > b) /\
-  (if_a_gt_b a b = false <-> a <= b).
-
-(* 定义一个函数，该函数在每一点的值，都为函数f1、f2在该点函数值中较大那一个 *)
-Definition max_f1_f2 (f1 f2 : R -> R) := 
-  fun x:R => if (if_a_gt_b (f1 x)(f2 x)) then (f1 x) else (f2 x).
-
+Definition max_f1_f2 (f1 f2 : R -> R) := fun x:R =>
+  match (total_le_gt (f1 x)(f2 x)) with
+  | left _ => f2 x
+  | right _ => f1 x
+  end.
 
 Lemma existence_f : forall a b f1 f2, 
   pos_inc f1 (0,b-a] /\
-  (forall r1:R, r1>0 -> exists z1:R, z1 ∈ (0,b-a] /\ r1 < Rabs(1/(f1 z1))) /\
+  (forall r1:R, exists z1:R, z1 ∈ (0,b-a] /\ r1 < Rabs(1/(f1 z1))) /\
   pos_inc f2 (0,b-a] /\
-  (forall r2:R, r2>0 -> exists z2:R, z2 ∈ (0,b-a] /\ r2 < Rabs(1/(f2 z2))) ->
+  (forall r2:R, exists z2:R, z2 ∈ (0,b-a] /\ r2 < Rabs(1/(f2 z2))) ->
   exists f3, (pos_inc f3 (0,b-a] /\
-  (forall r3:R, r3>0 -> exists z3:R, z3 ∈ (0,b-a] /\ r3 < Rabs(1/(f3 z3))) /\
+  (forall r3:R, exists z3:R, z3 ∈ (0,b-a] /\ r3 < Rabs(1/(f3 z3))) /\
   (forall a:R, f1 a <= f3 a /\ f2 a <= f3 a)).
 Proof.
-  intros.
-  exists (max_f1_f2 f1 f2).
+  intros. exists (max_f1_f2 f1 f2).
   destruct H, H0, H1. split.
   - unfold pos_inc. unfold pos_inc in H, H1.
     split; intros.
     + destruct H, H1. generalize H3; intros. apply H in H3; apply H1 in H6.
-      unfold max_f1_f2; destruct if_a_gt_b; auto.
+      unfold max_f1_f2; destruct total_le_gt; auto.
     + destruct H, H1; generalize H5; intros.
       apply H6 in H5; auto. apply H7 in H8; auto.
-      unfold max_f1_f2.
-      assert(if_a_gt_b(f1 z1)(f2 z1)=true \/ if_a_gt_b(f1 z1)(f2 z1)=false).
-      { destruct if_a_gt_b; auto. }
-      destruct H9.
-      * rewrite H9; apply comp_a_b_Pro in H9.
-        assert(if_a_gt_b(f1 z2)(f2 z2)=true\/if_a_gt_b(f1 z2)(f2 z2)=false).
-         { destruct if_a_gt_b; auto. }
-        destruct H10. rewrite H10; auto. rewrite H10; apply comp_a_b_Pro in H10.
-        eapply Rle_trans. apply H5. apply H10.
-      * rewrite H9; apply comp_a_b_Pro in H9.
-        assert(if_a_gt_b(f1 z2)(f2 z2)=true\/if_a_gt_b(f1 z2)(f2 z2)=false).
-         { destruct if_a_gt_b; auto. }
-        destruct H10. rewrite H10; apply comp_a_b_Pro in H10.
-        eapply Rle_trans. apply H8. apply Rlt_le; auto.
-        rewrite H10; auto.
+      unfold max_f1_f2.  destruct total_le_gt.
+      * destruct total_le_gt; auto.
+        apply Rle_trans with(r2:=f2 z2); auto.
+        apply Rlt_le; auto.
+      * destruct total_le_gt; auto.
+        eapply Rle_trans. apply H5 . apply r0.
   - split; intros.
-    generalize H3 as r; intro.
-    generalize H3 as H4; intro.
-    apply H0 in H3; apply H2 in H4. clear H0; clear H2.
-    unfold max_f1_f2.
+    generalize(H0 r3); intro.
+    generalize(H2 r3); intro. clear H0; clear H2.
     destruct H3, H0. destruct H4, H3.
-    assert(if_a_gt_b(f1 x)(f2 x)=true\/if_a_gt_b(f1 x)(f2 x)=false).
-      { destruct if_a_gt_b; auto. }
-    assert(if_a_gt_b(f1 x0)(f2 x0)=true\/if_a_gt_b(f1 x0)(f2 x0)=false).
-      { destruct if_a_gt_b at 1 2; auto. }
-    generalize(classic (exists z3:R, z3 ∈ (0,b-a]/\
-    r3 < Rabs (1/(if if_a_gt_b (f1 z3) (f2 z3) then f1 z3 else f2 z3)))); intro.
-    destruct H7; auto.
-    generalize H7; intro.
-    apply not_exist with(x:=x) in H7; auto. apply Rnot_lt_le in H7.
-    apply not_exist with(x:=x0) in H8; auto. apply Rnot_lt_le in H8.
-    destruct H5.
-    + rewrite H5 in H7; apply Rlt_not_le in H2; contradiction.
-    + rewrite H5 in H7.
-      destruct H6.
-      * rewrite H6 in H8.
-        unfold pos_inc in H, H1.
+    generalize(classic (exists z3:R, z3∈(0,b-a]/\
+    r3 < Rabs(1/(if total_le_gt(f1 z3)(f2 z3) then f2 z3 else f1 z3)))); intro.
+    destruct H5; auto. generalize H5; intro.
+    apply not_exist with(x:=x0) in H5; auto. apply Rnot_lt_le in H5.
+    apply not_exist with(x:=x) in H6; auto. apply Rnot_lt_le in H6.
+    unfold max_f1_f2. destruct total_le_gt.
+    + apply Rlt_not_le in H4; contradiction.
+    + exists x. destruct total_le_gt.
+      * unfold pos_inc in H, H1.
         destruct H, H1.
-        generalize(H x H0); intro; apply Rinv_0_lt_compat in H11.
-        generalize(H x0 H3); intro; apply Rinv_0_lt_compat in H12.
-        generalize(H1 x H0); intro; apply Rinv_0_lt_compat in H13.
-        generalize(H1 x0 H3); intro; apply Rinv_0_lt_compat in H14.
+        generalize(H x H0); intro; apply Rinv_0_lt_compat in H9.
+        generalize(H x0 H3); intro; apply Rinv_0_lt_compat in H10.
+        generalize(H1 x H0); intro; apply Rinv_0_lt_compat in H11.
+        generalize(H1 x0 H3); intro; apply Rinv_0_lt_compat in H12.
+        assert(r3 > 0) as R3_ge_0. 
+         { apply Rlt_not_eq in H10. unfold Rdiv in H5.
+           rewrite Rmult_1_l in H5. apply not_eq_sym in H10.
+           apply Rabs_pos_lt in H10. 
+           apply Rlt_le_trans with(r3:=r3)in H10; auto. }
         unfold Rdiv in H2; rewrite Rmult_1_l in H2; rewrite Rabs_right in H2;
         try apply Rgt_ge; try apply Rlt_inv in H2; auto.
         unfold Rdiv in H4; rewrite Rmult_1_l in H4; rewrite Rabs_right in H4;
         try apply Rgt_ge; try apply Rlt_inv in H4; auto.
-        unfold Rdiv in H7; rewrite Rmult_1_l in H7; rewrite Rabs_right in H7;
-        try apply Rgt_ge; try apply Rinv_le in H7; auto.
-        unfold Rdiv in H8; rewrite Rmult_1_l in H8; rewrite Rabs_right in H8;
-        try apply Rgt_ge; try apply Rinv_le in H8; auto.
-        clear H11 H12 H13 H14.
+        unfold Rdiv in H5; rewrite Rmult_1_l in H5; rewrite Rabs_right in H5;
+        try apply Rgt_ge; try apply Rinv_le in H5; auto.
+        unfold Rdiv in H6; rewrite Rmult_1_l in H6; rewrite Rabs_right in H6;
+        try apply Rgt_ge; try apply Rinv_le in H6; auto.
+        clear H9 H10 H11 H12.
         generalize (Rtotal_order x x0); intro.
-        destruct H11.
-        { generalize H11; intro.
-          apply H9 in H11; apply H10 in H12; auto.
-          apply Rge_le in H7.
-          generalize(Rlt_le_trans (f2 x0)(/r3)(f2 x) H4 H7); intro.
-          apply Rlt_not_le in H13; contradiction. }
-        destruct H11.
-        { rewrite H11 in H5; rewrite H5 in H6.
-          generalize Bool.diff_false_true; intro; contradiction. }
-        apply Rgt_lt in H11.
-        generalize H11; intro.
-        apply H9 in H11; apply H10 in H12; auto.
-        apply Rge_le in H8.
-        generalize(Rlt_le_trans (f1 x)(/r3)(f1 x0) H2 H8); intro.
-        apply Rlt_not_le in H13; contradiction.
-      * rewrite H6 in H8.
-        exists x0; split; auto. rewrite H6; auto.
-    + unfold max_f1_f2.
-      assert(if_a_gt_b(f1 a0)(f2 a0)=true\/if_a_gt_b(f1 a0)(f2 a0)=false).
-      { destruct if_a_gt_b; auto. }
-      destruct H3.
-      * rewrite H3; apply comp_a_b_Pro in H3.
-        split.
-        apply Rge_refl.
-        apply Rlt_le; auto.
-      * rewrite H3; apply comp_a_b_Pro in H3.
-        split; auto.
-        apply Rge_refl.
+        destruct H9.
+        { generalize H9; intro.
+          apply H7 in H9; apply H8 in H10; auto.
+          apply Rge_le in H6.
+          generalize(Rlt_le_trans (f2 x0)(/r3)(f2 x) H4 H6); intro.
+          apply Rlt_not_le in H11; contradiction. }
+        destruct H9.
+        { rewrite H9 in H6. apply Rlt_not_ge in H4. contradiction. }
+        { apply Rgt_lt in H9.
+          generalize H9; intro.
+          apply H7 in H9; apply H8 in H10; auto.
+          apply Rge_le in H5.
+          generalize(Rlt_le_trans (f1 x)(/r3)(f1 x0) H2 H5); intro.
+          apply Rlt_not_le in H11; contradiction. }
+      * split; auto.
+    + unfold max_f1_f2. destruct total_le_gt.
+      * split; auto. apply Rge_refl.
+      * split. apply Rle_refl.
+        apply Rge_le; apply Rgt_ge; auto.
 Qed.
 
 
@@ -230,7 +207,7 @@ Proof.
   unfold derivative; unfold bounded_rec_f; intros.
   destruct H, H, H1, H2, H2. rename x into d1; rename x0 into M1.
   destruct H0, H0, H4, H5, H5. rename x into d2; rename x0 into M2.
-  assert (exists d3, pos_inc d3 (0,b-a] /\ (forall r3:R, r3>0 ->
+  assert (exists d3, pos_inc d3 (0,b-a] /\ (forall r3:R,
           exists z3:R, z3 ∈ (0,b-a] /\ r3 < Rabs(1/(d3 z3))) /\
           forall a:R, d1 a <= d3 a /\ d2 a <= d3 a).
    { apply existence_f with (a:=a)(b:=b) (f1:=d1) (f2:=d2). 
@@ -327,9 +304,8 @@ intros F f a b c d C.
   rewrite Rminus_distr; rewrite R_distr; rewrite Rminus_plus_r; auto.
   split.
   unfold bounded_rec_f; unfold bounded_rec_f in H0; intros.
-  apply H0 in H3; destruct H3, H3, H3.
-  exists (x/c).
-  split.
+  generalize(H0 M0); intro. destruct H3, H3, H3.
+  exists (x/c). split.
   - unfold In; unfold oc. split.
     + rewrite <- Rdiv_minus_distr; rewrite Rminus_distr.
       rewrite R_distr; rewrite Rminus_plus_r.
@@ -394,7 +370,7 @@ intros F f a b c d C.
   assert(c ^ 2 = c*c). { ring. }
   rewrite H1. apply Rmult_lt_0_compat; auto.
   intros.
-  generalize(Real_Order h 0); intro.
+  generalize(total_eq_or_neq h 0); intro.
   destruct H2.
   - rewrite H2. rewrite Rplus_0_r.
     rewrite Rmult_0_r. repeat rewrite <- Rsqr_pow2.
@@ -435,6 +411,7 @@ intros F f a b c d C.
     assert(M*(c*h)^2=c^2*M*h^2). { ring. }
     rewrite <- H4; auto.
 Qed.
+
 
 (*可加性*)
 Definition additivity (S:R->R->R)(a b:R):=

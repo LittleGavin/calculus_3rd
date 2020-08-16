@@ -12,11 +12,7 @@ Definition In (x:R)(A:R_Ensemble) :Prop := A x.
 Notation "x ∈ A" := (In x A) (at level 10).
 
 (* 定义：区间 *)
-(* 通过check命令我们可以查看我们所定义的区间类型为R_Ensemble.
-   例： Variable a b:R.
-       Check oo a b. *)
-
-(* 闭区间 *)
+(* 开区间 *)
 Definition oo (a b:R) := fun x:R => a<b/\a<x<b.
 Notation "( a , b )" := (oo a b).
 
@@ -33,7 +29,6 @@ Definition co (a b:R) := fun x:R => a<b/\a<=x<b.
 Notation "[ a , b )" := (co a b).
 
 (* 函数在区间上一些基本性质的形式化描述 *)
-
 (* 函数f在区间q上单调增 *)
 Definition mon_increasing f (q:R_Ensemble) :=
   forall x y:R, x ∈ q /\ y ∈ q /\ y-x>0 -> f x <= f y.
@@ -52,7 +47,7 @@ Definition strict_mon_decreasing f (q:R_Ensemble) :=
 
 (* 函数f在区间q上倒数无界 *)
 Definition bounded_rec_f f (q:R_Ensemble) :=
-  forall M:R, M>0 -> exists z:R, z ∈ q /\ M < Rabs(1/(f z)).
+  forall M:R, exists z:R, z ∈ q /\ M < Rabs(1/(f z)).
 
 (* 函数f在区间q上正值单调不减 *)
 Definition pos_inc f (q:R_Ensemble) := 
@@ -66,7 +61,7 @@ Definition pos_dec f (q:R_Ensemble) :=
 
 (* 一些组合函数、复合函数的形式化描述 *)
 
-(* 设有函数下面给出函数cf(x)的形式化描述 *)
+(* 设有函数f(x)，下面给出函数cf(x)的形式化描述 *)
 Definition mult_real_f (c:R) f := fun x:R => (c * (f x)).
 
 (* 设有函数f1(x)、f2(x)，下面给出函数f1(x)+f2(x)的形式化描述 *)
@@ -77,7 +72,6 @@ Definition Com_F_c (f:R->R) c x := f (c * x).
 
 (* 设有函数f(x)，实数c、d，下面给出函数f(cx+d)的形式化描述 *)
 Definition Com_F (f:R->R) (c d x:R) := f (c*x+d).
-
 
 (* 排中律 *)
 Axiom classic : forall P : Prop, P \/ ~P.
